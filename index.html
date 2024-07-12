@@ -22,7 +22,7 @@
             padding: 20px;
             min-height: 100vh;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
         }
 
@@ -35,6 +35,7 @@
             box-shadow: var(--card-shadow);
             backdrop-filter: blur(4px);
             border: 1px solid rgba(255, 255, 255, 0.18);
+            margin-bottom: 20px;
         }
 
         .weather-card {
@@ -152,10 +153,10 @@
         }
 
         footer {
-            margin-top: 20px;
-            font-size: 0.9em;
+            font-size: 1.2em;
             color: #bdc3c7;
             text-align: center;
+            margin-top: 10px;
         }
 
         @keyframes fadeIn {
@@ -166,9 +167,41 @@
         .fade-in {
             animation: fadeIn 1s ease-in;
         }
+
+        .language-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .language-toggle:hover {
+            background-color: #2980b9;
+        }
+
+        @keyframes weatherIconAnimation {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .weather-icon {
+            font-size: 5rem;
+            margin-bottom: 20px;
+            display: inline-block;
+            animation: weatherIconAnimation 2s infinite;
+        }
     </style>
 </head>
 <body>
+    <button id="language-toggle" class="language-toggle">PT-BR</button>
+    
     <div class="container fade-in">
         <form class="search-bar" id="search-form">
             <input type="text" id="location-input" placeholder="Enter city name" required>
@@ -180,6 +213,7 @@
         <div class="weather-card">
             <h1>DarkWeather</h1>
             <div class="location">Loading...</div>
+            <div class="weather-icon">🌡️</div>
             <div class="temperature">--°C</div>
             <div class="description">--</div>
             <div class="details">
@@ -210,6 +244,7 @@
     <script>
         const API_BASE_URL = 'https://api.open-meteo.com/v1/forecast';
         const GEOCODING_API_URL = 'https://geocoding-api.open-meteo.com/v1/search';
+        let currentLanguage = 'en-US';
 
         async function getCoordinates(cityName) {
             const response = await fetch(`${GEOCODING_API_URL}?name=${encodeURIComponent(cityName.trim())}&count=1`);
@@ -264,6 +299,7 @@
             $('.location').text(`${location.name}, ${location.country}`);
             $('.temperature').text(`${Math.round(weatherData.current.temperature_2m)}°C`);
             $('.description').text(getWeatherDescription(weatherData.current.weather_code));
+            $('.weather-icon').text(getWeatherEmoji(weatherData.current.weather_code));
             $('.details .detail:nth-child(1) .detail-value').text(`${weatherData.current.relative_humidity_2m}%`);
             $('.details .detail:nth-child(2) .detail-value').text(`${Math.round(weatherData.current.wind_speed_10m)} km/h`);
             $('.details .detail:nth-child(3) .detail-value').text(`${Math.round(weatherData.current.pressure_msl)} hPa`);
@@ -273,7 +309,7 @@
 
             for (let i = 0; i < 5; i++) {
                 const date = new Date(weatherData.daily.time[i]);
-                const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+                const dayName = date.toLocaleDateString(currentLanguage, { weekday: 'short' });
                 const weatherCode = weatherData.daily.weather_code[i];
                 const maxTemp = Math.round(weatherData.daily.temperature_2m_max[i]);
                 const minTemp = Math.round(weatherData.daily.temperature_2m_min[i]);
@@ -288,8 +324,10 @@
         }
 
         async function handleSearch(event) {
-            event.preventDefault();
-            const cityName = $('#location-input').val();
+            if (event) {
+                event.preventDefault();
+            }
+            const cityName = $('#location-input').val() || 'London'; // Default to London if no input
             const errorMessage = $('#error-message');
 
             try {
@@ -305,10 +343,50 @@
             }
         }
 
+        function updateLanguage() {
+            const languageToggle = $('#language-toggle');
+            currentLanguage = currentLanguage === 'en-US' ? 'pt-BR' : 'en-US';
+            languageToggle.text(currentLanguage === 'en-US' ? 'PT-BR' : 'EN-US');
+            
+            updateUIText();
+            handleSearch();
+        }
+
+        function updateUIText() {
+            const texts = {
+                'en-US': {
+                    searchPlaceholder: 'Enter city name',
+                    searchButton: 'Search',
+                    loading: 'Loading...',
+                    humidity: 'Humidity',
+                    wind: 'Wind',
+                    pressure: 'Pressure'
+                },
+                'pt-BR': {
+                    searchPlaceholder: 'Digite o nome da cidade',
+                    searchButton: 'Buscar',
+                    loading: 'Carregando...',
+                    humidity: 'Umidade',
+                    wind: 'Vento',
+                    pressure: 'Pressão'
+                }
+            };
+
+            const currentTexts = texts[currentLanguage];
+
+            $('#location-input').attr('placeholder', currentTexts.searchPlaceholder);
+            $('.search-bar button').text(currentTexts.searchButton);
+            $('.loading').text(currentTexts.loading);
+            $('.detail-label').eq(0).text(currentTexts.humidity);
+            $('.detail-label').eq(1).text(currentTexts.wind);
+            $('.detail-label').eq(2).text(currentTexts.pressure);
+        }
+
         $(document).ready(() => {
             $('#search-form').on('submit', handleSearch);
-            // Initial weather data for a default city (e.g., London)
-            handleSearch({ preventDefault: () => {} });
+            $('#language-toggle').on('click', updateLanguage);
+            updateUIText();
+            handleSearch();
         });
     </script>
 </body>
