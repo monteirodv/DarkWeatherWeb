@@ -65,6 +65,13 @@
             margin-bottom: 20px;
         }
 
+        .curious-phrase {
+            font-style: italic;
+            margin-top: 15px;
+            font-size: 1.1rem;
+            color: #a0a0a0;
+        }
+
         .details {
             display: flex;
             justify-content: space-between;
@@ -216,6 +223,7 @@
             <div class="weather-icon">🌡️</div>
             <div class="temperature">--°C</div>
             <div class="description">--</div>
+            <div id="curious-phrase" class="curious-phrase"></div>
             <div class="details">
                 <div class="detail">
                     <div class="detail-label">Humidity</div>
@@ -295,14 +303,48 @@
             return '🌡️';
         }
 
-        function updateWeatherUI(weatherData, location) {
+        async function getCuriousPhrase(location, weatherDescription) {
+            const API_KEY = 'AIzaSyAI2UxJZzxJdtFUx6nI_615n_XFW964HEM';
+            const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
+            
+            const prompt = `Generate a short, curious phrase (maximum 15 words) about the weather in ${location} where it's currently ${weatherDescription}. Make it interesting and engaging.`;
+
+            try {
+                const response = await fetch(`${API_URL}?key=${API_KEY}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }],
+                    }),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch curious phrase');
+                }
+
+                const data = await response.json();
+                return data.candidates[0].content.parts[0].text;
+            } catch (error) {
+                console.error('Error fetching curious phrase:', error);
+                return '';
+            }
+        }
+
+        async function updateWeatherUI(weatherData, location) {
             $('.location').text(`${location.name}, ${location.country}`);
             $('.temperature').text(`${Math.round(weatherData.current.temperature_2m)}°C`);
-            $('.description').text(getWeatherDescription(weatherData.current.weather_code));
+            const weatherDescription = getWeatherDescription(weatherData.current.weather_code);
+            $('.description').text(weatherDescription);
             $('.weather-icon').text(getWeatherEmoji(weatherData.current.weather_code));
             $('.details .detail:nth-child(1) .detail-value').text(`${weatherData.current.relative_humidity_2m}%`);
             $('.details .detail:nth-child(2) .detail-value').text(`${Math.round(weatherData.current.wind_speed_10m)} km/h`);
             $('.details .detail:nth-child(3) .detail-value').text(`${Math.round(weatherData.current.pressure_msl)} hPa`);
+
+            // Fetch and display the curious phrase
+            const curiousPhrase = await getCuriousPhrase(`${location.name}, ${location.country}`, weatherDescription);
+            $('#curious-phrase').text(curiousPhrase);
 
             const forecastContainer = $('#forecast');
             forecastContainer.empty();
@@ -335,7 +377,7 @@
                 errorMessage.text('');
                 const location = await getCoordinates(cityName);
                 const weatherData = await getWeatherData(location.latitude, location.longitude);
-                updateWeatherUI(weatherData, location);
+                await updateWeatherUI(weatherData, location);
             } catch (error) {
                 errorMessage.text('Error: ' + error.message);
             } finally {
@@ -362,7 +404,7 @@
                     wind: 'Wind',
                     pressure: 'Pressure'
                 },
-                'pt-BR': {
+				'pt-BR': {
                     searchPlaceholder: 'Digite o nome da cidade',
                     searchButton: 'Buscar',
                     loading: 'Carregando...',
@@ -382,11 +424,11 @@
             $('.detail-label').eq(2).text(currentTexts.pressure);
         }
 
-        $(document).ready(() => {
+        $(document).ready(async () => {
             $('#search-form').on('submit', handleSearch);
             $('#language-toggle').on('click', updateLanguage);
             updateUIText();
-            handleSearch();
+            await handleSearch();
         });
     </script>
 </body>
