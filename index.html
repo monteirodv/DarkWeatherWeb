@@ -303,34 +303,37 @@
             return '🌡️';
         }
 
-        async function getCuriousPhrase(location, weatherDescription) {
-            const API_KEY = 'AIzaSyAI2UxJZzxJdtFUx6nI_615n_XFW964HEM';
-            const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
-            
-            const prompt = `Create a description , describing the ${weatherDescription} in ${location} , make it concise, max 15 chars`;
+		async function getCuriousPhrase(location, weatherDescription) {
+			const API_KEY = 'AIzaSyAI2UxJZzxJdtFUx6nI_615n_XFW964HEM';
+			const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
+			
+			const promptEN = `Create a description, describing the ${weatherDescription} in ${location}, make it concise, max 15 chars`;
+			const promptPT = `Crie uma descrição do ${weatherDescription} em ${location}, seja conciso, máximo 15 caracteres`;
 
-            try {
-                const response = await fetch(`${API_URL}?key=${API_KEY}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: prompt }] }],
-                    }),
-                });
+			const prompt = currentLanguage === 'pt-BR' ? promptPT : promptEN;
 
-                if (!response.ok) {
-                    throw new Error('Failed to fetch curious phrase');
-                }
+			try {
+				const response = await fetch(`${API_URL}?key=${API_KEY}`, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({
+						contents: [{ parts: [{ text: prompt }] }],
+					}),
+				});
 
-                const data = await response.json();
-                return data.candidates[0].content.parts[0].text;
-            } catch (error) {
-                console.error('Error fetching curious phrase:', error);
-                return '';
-            }
-        }
+				if (!response.ok) {
+					throw new Error('Failed to fetch curious phrase');
+				}
+
+				const data = await response.json();
+				return data.candidates[0].content.parts[0].text;
+			} catch (error) {
+				console.error('Error fetching curious phrase:', error);
+				return '';
+			}
+		}
 
         async function updateWeatherUI(weatherData, location) {
             $('.location').text(`${location.name}, ${location.country}`);
