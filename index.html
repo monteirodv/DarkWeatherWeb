@@ -4,71 +4,70 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DarkWeather - Real-time Weather Forecasts</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <style>
         :root {
             --bg-color: #121212;
             --text-color: #e0e0e0;
             --accent-color: #3498db;
             --card-bg: #1e1e1e;
-            --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --card-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
         }
 
         body {
-            font-family: 'Roboto', sans-serif;
-            background-color: var(--bg-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2c3e50, #34495e);
             color: var(--text-color);
             margin: 0;
-            padding: 0;
+            padding: 20px;
+            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
         }
 
         .container {
             max-width: 800px;
             width: 100%;
-            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: var(--card-shadow);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
         }
 
         .weather-card {
-            background-color: var(--card-bg);
-            border-radius: 15px;
-            box-shadow: var(--card-shadow);
-            padding: 30px;
-            margin-bottom: 20px;
-            transition: transform 0.3s ease;
-        }
-
-        .weather-card:hover {
-            transform: translateY(-5px);
+            text-align: center;
+            margin-bottom: 30px;
         }
 
         h1 {
             font-size: 2.5rem;
-            margin-bottom: 10px;
+            margin-bottom: 20px;
             color: var(--accent-color);
         }
 
         .location {
-            font-size: 1.2rem;
-            margin-bottom: 20px;
+            font-size: 1.8rem;
+            margin-bottom: 10px;
         }
 
         .temperature {
-            font-size: 3rem;
+            font-size: 4rem;
             font-weight: bold;
             margin-bottom: 10px;
         }
 
         .description {
-            font-size: 1.1rem;
+            font-size: 1.5rem;
             margin-bottom: 20px;
         }
 
         .details {
             display: flex;
             justify-content: space-between;
+            margin-bottom: 30px;
         }
 
         .detail {
@@ -88,7 +87,6 @@
         .forecast {
             display: flex;
             justify-content: space-between;
-            margin-top: 30px;
         }
 
         .forecast-day {
@@ -107,15 +105,6 @@
 
         .forecast-temp {
             font-size: 1.1rem;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .fade-in {
-            animation: fadeIn 1s ease-in;
         }
 
         .search-bar {
@@ -152,6 +141,30 @@
             color: #ff6b6b;
             margin-top: 10px;
             text-align: center;
+            font-weight: bold;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            font-size: 1.5em;
+            margin-top: 20px;
+        }
+
+        footer {
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #bdc3c7;
+            text-align: center;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .fade-in {
+            animation: fadeIn 1s ease-in;
         }
     </style>
 </head>
@@ -188,14 +201,18 @@
         <div class="forecast" id="forecast">
             <!-- Forecast data will be dynamically inserted here -->
         </div>
+
+        <div class="loading">Loading...</div>
     </div>
+
+    <footer>Made with ❤️ by Dan</footer>
 
     <script>
         const API_BASE_URL = 'https://api.open-meteo.com/v1/forecast';
         const GEOCODING_API_URL = 'https://geocoding-api.open-meteo.com/v1/search';
 
         async function getCoordinates(cityName) {
-            const response = await fetch(`${GEOCODING_API_URL}?name=${encodeURIComponent(cityName)}&count=1`);
+            const response = await fetch(`${GEOCODING_API_URL}?name=${encodeURIComponent(cityName.trim())}&count=1`);
             const data = await response.json();
             if (data.results && data.results.length > 0) {
                 return {
@@ -215,34 +232,17 @@
 
         function getWeatherDescription(code) {
             const weatherCodes = {
-                0: 'Clear sky',
-                1: 'Mainly clear',
-                2: 'Partly cloudy',
-                3: 'Overcast',
-                45: 'Fog',
-                48: 'Depositing rime fog',
-                51: 'Light drizzle',
-                53: 'Moderate drizzle',
-                55: 'Dense drizzle',
-                56: 'Light freezing drizzle',
-                57: 'Dense freezing drizzle',
-                61: 'Slight rain',
-                63: 'Moderate rain',
-                65: 'Heavy rain',
-                66: 'Light freezing rain',
-                67: 'Heavy freezing rain',
-                71: 'Slight snow fall',
-                73: 'Moderate snow fall',
-                75: 'Heavy snow fall',
+                0: 'Clear sky', 1: 'Mainly clear', 2: 'Partly cloudy', 3: 'Overcast',
+                45: 'Fog', 48: 'Depositing rime fog',
+                51: 'Light drizzle', 53: 'Moderate drizzle', 55: 'Dense drizzle',
+                56: 'Light freezing drizzle', 57: 'Dense freezing drizzle',
+                61: 'Slight rain', 63: 'Moderate rain', 65: 'Heavy rain',
+                66: 'Light freezing rain', 67: 'Heavy freezing rain',
+                71: 'Slight snow fall', 73: 'Moderate snow fall', 75: 'Heavy snow fall',
                 77: 'Snow grains',
-                80: 'Slight rain showers',
-                81: 'Moderate rain showers',
-                82: 'Violent rain showers',
-                85: 'Slight snow showers',
-                86: 'Heavy snow showers',
-                95: 'Thunderstorm',
-                96: 'Thunderstorm with slight hail',
-                99: 'Thunderstorm with heavy hail'
+                80: 'Slight rain showers', 81: 'Moderate rain showers', 82: 'Violent rain showers',
+                85: 'Slight snow showers', 86: 'Heavy snow showers',
+                95: 'Thunderstorm', 96: 'Thunderstorm with slight hail', 99: 'Thunderstorm with heavy hail'
             };
             return weatherCodes[code] || 'Unknown';
         }
@@ -261,15 +261,15 @@
         }
 
         function updateWeatherUI(weatherData, location) {
-            document.querySelector('.location').textContent = `${location.name}, ${location.country}`;
-            document.querySelector('.temperature').textContent = `${Math.round(weatherData.current.temperature_2m)}°C`;
-            document.querySelector('.description').textContent = getWeatherDescription(weatherData.current.weather_code);
-            document.querySelector('.details .detail:nth-child(1) .detail-value').textContent = `${weatherData.current.relative_humidity_2m}%`;
-            document.querySelector('.details .detail:nth-child(2) .detail-value').textContent = `${Math.round(weatherData.current.wind_speed_10m)} km/h`;
-            document.querySelector('.details .detail:nth-child(3) .detail-value').textContent = `${Math.round(weatherData.current.pressure_msl)} hPa`;
+            $('.location').text(`${location.name}, ${location.country}`);
+            $('.temperature').text(`${Math.round(weatherData.current.temperature_2m)}°C`);
+            $('.description').text(getWeatherDescription(weatherData.current.weather_code));
+            $('.details .detail:nth-child(1) .detail-value').text(`${weatherData.current.relative_humidity_2m}%`);
+            $('.details .detail:nth-child(2) .detail-value').text(`${Math.round(weatherData.current.wind_speed_10m)} km/h`);
+            $('.details .detail:nth-child(3) .detail-value').text(`${Math.round(weatherData.current.pressure_msl)} hPa`);
 
-            const forecastContainer = document.getElementById('forecast');
-            forecastContainer.innerHTML = '';
+            const forecastContainer = $('#forecast');
+            forecastContainer.empty();
 
             for (let i = 0; i < 5; i++) {
                 const date = new Date(weatherData.daily.time[i]);
@@ -278,34 +278,35 @@
                 const maxTemp = Math.round(weatherData.daily.temperature_2m_max[i]);
                 const minTemp = Math.round(weatherData.daily.temperature_2m_min[i]);
 
-                const forecastDay = document.createElement('div');
-                forecastDay.className = 'forecast-day';
-                forecastDay.innerHTML = `
+                const forecastDay = $('<div>').addClass('forecast-day').html(`
                     <div class="forecast-date">${dayName}</div>
                     <div class="forecast-icon">${getWeatherEmoji(weatherCode)}</div>
                     <div class="forecast-temp">${maxTemp}°C / ${minTemp}°C</div>
-                `;
-                forecastContainer.appendChild(forecastDay);
+                `);
+                forecastContainer.append(forecastDay);
             }
         }
 
         async function handleSearch(event) {
             event.preventDefault();
-            const cityName = document.getElementById('location-input').value;
-            const errorMessage = document.getElementById('error-message');
+            const cityName = $('#location-input').val();
+            const errorMessage = $('#error-message');
 
             try {
-                errorMessage.textContent = '';
+                $('.loading').show();
+                errorMessage.text('');
                 const location = await getCoordinates(cityName);
                 const weatherData = await getWeatherData(location.latitude, location.longitude);
                 updateWeatherUI(weatherData, location);
             } catch (error) {
-                errorMessage.textContent = 'Error: ' + error.message;
+                errorMessage.text('Error: ' + error.message);
+            } finally {
+                $('.loading').hide();
             }
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('search-form').addEventListener('submit', handleSearch);
+        $(document).ready(() => {
+            $('#search-form').on('submit', handleSearch);
             // Initial weather data for a default city (e.g., London)
             handleSearch({ preventDefault: () => {} });
         });
