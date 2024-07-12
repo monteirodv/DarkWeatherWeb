@@ -307,8 +307,9 @@
 			const API_KEY = 'AIzaSyAI2UxJZzxJdtFUx6nI_615n_XFW964HEM';
 			const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
 			
-			const promptEN = `Create a description, describing the ${weatherDescription} in ${location}, make it concise, max 15 chars`;
-			const promptPT = `Crie uma descrição do ${weatherDescription} em ${location}, seja conciso, máximo 15 caracteres`;
+			const promptEN = `Create a funny, witty one-liner (max 100 characters) about the ${weatherDescription} in ${location}. Incorporate a well-known landmark or cultural element of the city and relate it to the weather condition. Example: "The weather in London is so cloudy today, even Big Ben needs a GPS!"`;
+			
+			const promptPT = `Crie uma frase engraçada e espirituosa (máximo 100 caracteres) sobre o ${weatherDescription} em ${location}. Incorpore um ponto turístico famoso ou elemento cultural da cidade e relacione-o com a condição climática. Exemplo: "O tempo em São Paulo está tão nublado hoje que nem o MASP consegue expor suas obras!"`;
 
 			const prompt = currentLanguage === 'pt-BR' ? promptPT : promptEN;
 
