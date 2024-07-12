@@ -307,7 +307,7 @@
             const API_KEY = 'AIzaSyAI2UxJZzxJdtFUx6nI_615n_XFW964HEM';
             const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
             
-            const prompt = `Generate a short, curious phrase (maximum 15 words) about the weather in ${location} where it's currently ${weatherDescription}. Make it interesting and engaging.`;
+            const prompt = `Create a description , describing the ${weatherDescription} in ${location} , make it concise, max 15 chars`;
 
             try {
                 const response = await fetch(`${API_URL}?key=${API_KEY}`, {
