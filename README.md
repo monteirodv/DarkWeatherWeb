@@ -90,4 +90,4 @@ Project Link: [https://github.com/yourusername/darkweather](https://github.com/y
 
 ---
 
-Made with ❤️ by [Your Name]
+Made with ❤️ by Dan
